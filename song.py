@@ -8,8 +8,6 @@ import selenium.common.exceptions as ee
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import cchardet
-import aiodns
 import lxml
 from bs4 import BeautifulSoup
 import pyquery
@@ -20,46 +18,110 @@ import redis
 from http.server import HTTPServer,CGIHTTPRequestHandler
 
 
-options = Options()
-options.add_argument('-headless')
-driver = Firefox(executable_path='geckodriver', firefox_options=options)
-driver.get("https://fanyi.qq.com/")
-def fanyi(file_content):
+headLessPool = []
+retPool = {
+    "num": 0,
+    "targetsnum":0,
+}
+lock = {
+    "state":0
+}
+
+def buildPool():
+    pass
+
+
+import _thread
+
+def getOneQueue():
+    for i in range(retPool["targetsnum"]):
+        if retPool[str(i)]["state"] == 0:
+            retPool[str(i)]["state"] = 2
+            return retPool[str(i)]["temp"], i
+    return "",-1
+
+# 为线程定义一个函数
+def translator(name, lock, driver):
     ret = ""
+    while True:
+        if retPool["num"] != retPool["targetsnum"] and lock["state"] == 0:
+            #需要取一个进行翻译
+            lock["state"] = 1
+            nowstr, index = getOneQueue()
+            lock["state"] = 0
+            if index == -1:
+                continue
+
+            #开始翻译
+            try:
+                # stopword = ":q"
+                # file_content = ""
+                # print("请输入内容【单独输入‘:q‘保存退出】：")
+                # for line in iter(input, stopword):
+                #     file_content = file_content + line + "\n"
+                aa = nowstr.replace('\n', ' ')
+                input1 = driver.find_element_by_class_name("textinput")
+
+                input1.send_keys(aa)
+                input1.send_keys('\n')
+                wait = WebDriverWait(driver, 10)
+                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-dst")))
+                input2 = driver.find_element_by_class_name("text-dst")
+                ret = input2.text
+                print(ret)
+                input3 = driver.find_element_by_class_name("tool-close")
+                input3.click()
+            except(ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException, ee.ElementNotInteractableException):
+                driver.close()
+                retPool[str(index)]["state"] = 0
+                break
+
+            #将结果保存在retPool,index中
+            retPool[str(index)]["temp"] = ret
+            retPool[str(index)]["state"] = 1
+            retPool["num"] += 1
+
+def buildTranslatorPool():
+    # 创建两个线程
     try:
-        # stopword = ":q"
-        # file_content = ""
-        # print("请输入内容【单独输入‘:q‘保存退出】：")
-        # for line in iter(input, stopword):
-        #     file_content = file_content + line + "\n"
-        aa = file_content.replace('\n', ' ')
-        input1 = driver.find_element_by_class_name("textinput")
+        N = 32
+        for i in range(N):
+            options = Options()
+            options.add_argument('-headless')
+            driver = Firefox(executable_path='geckodriver', firefox_options=options)
+            driver.get("https://fanyi.qq.com/")
+            _thread.start_new_thread(translator, ("Thread-"+str(i), lock, driver))
+            print("build " + str(i) + " finished!")
+        print("all build "+ str(N) + " finished!")
+    except:
+        print("Error: 无法启动线程")
 
-        input1.send_keys(aa)
-        input1.send_keys('\n')
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-dst")))
-        input2 = driver.find_element_by_class_name("text-dst")
-        ret = input2.text
-        print(ret)
-        input3 = driver.find_element_by_class_name("tool-close")
-        input3.click()
-    except ee.NoSuchElementException or ee.InvalidSessionIdException:
-        driver.close()
-    return ret
 
-import socket
-import time
 
-# coding=utf-8
-# !/usr/bin/env python
-# --coding:utf-8--
-# python 简易 http server
+def fanyi(retPool, queue):
+    retPool["num"] = 0
+    for i in range(len(queue)):
+        retPool[str(i)] = {
+            "state": 0,
+            "temp":queue[i]
+        }
+    retPool["targetsnum"] = len(queue)
+
+
+def getRet(retPool, targets, type):
+    if retPool["targetsnum"] == retPool["num"]:
+        # 检查是否已经完成,如果完成，就填到target中
+        lock["state"] = 1
+        for i in range(retPool["num"]):
+            ret = retPool[str(i)]["temp"]
+            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
+            targets.append(count)
+            # 重置retPool
+            retPool["num"] = 0
+        return True
+    return False
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from os import path
-from urllib.parse import urlparse
-# from BaseHTTPServer import BaseHTTPRequestHandler
-import cgi
 
 # MIME-TYPE
 mimedic = [
@@ -115,24 +177,15 @@ class PostHandler(BaseHTTPRequestHandler):
             "target": [],
             "rc":0,
         }
-        num = 1
-        for i in queue:
-            count = {
-                "confidence": 0.8,
-                "count": 0,
-                "rc": 0,
-                "sentence_id": 0,
-                "target": "",
-                "trans_type": type
-            }
-            # ret = fanyi(i)
-            if len(i) > 20:
-                ret = fanyi(i)
-                num -= 1
-            else:
-               ret = ""
-            count["target"] = ret
-            data["target"].append(count)
+        #异步处理
+        lock["state"] = 1
+        fanyi(retPool, queue)
+        lock["state"] = 0
+
+        while True:
+            finished = getRet(retPool, data["target"], type)
+            if finished:
+                break
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -160,4 +213,5 @@ def start_server():
     sever.serve_forever()
 
 if __name__ == '__main__':
+    _thread.start_new_thread(buildTranslatorPool,())
     start_server()
