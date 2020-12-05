@@ -1,127 +1,18 @@
 import json
-from time import sleep
 import _thread
-
 from selenium.webdriver import Firefox
 from selenium.webdriver.firefox.options import Options
 import selenium.common.exceptions as ee
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import lxml
-from bs4 import BeautifulSoup
-import pyquery
-import pymysql
-import pymongo
-import redis
-
-from http.server import HTTPServer,CGIHTTPRequestHandler
-
-
-headLessPool = []
-retPool = {
-    "num": 0,
-    "targetsnum":0,
-}
-lock = {
-    "state":0
-}
-
-def buildPool():
-    pass
-
-
-import _thread
-
-def getOneQueue():
-    for i in range(retPool["targetsnum"]):
-        if retPool[str(i)]["state"] == 0:
-            retPool[str(i)]["state"] = 2
-            return retPool[str(i)]["temp"], i
-    return "",-1
-
-# 为线程定义一个函数
-def translator(name, lock, driver):
-    ret = ""
-    while True:
-        if retPool["num"] != retPool["targetsnum"] and lock["state"] == 0:
-            #需要取一个进行翻译
-            lock["state"] = 1
-            nowstr, index = getOneQueue()
-            lock["state"] = 0
-            if index == -1:
-                continue
-
-            #开始翻译
-            try:
-                # stopword = ":q"
-                # file_content = ""
-                # print("请输入内容【单独输入‘:q‘保存退出】：")
-                # for line in iter(input, stopword):
-                #     file_content = file_content + line + "\n"
-                aa = nowstr.replace('\n', ' ')
-                input1 = driver.find_element_by_class_name("textinput")
-
-                input1.send_keys(aa)
-                input1.send_keys('\n')
-                wait = WebDriverWait(driver, 10)
-                wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-dst")))
-                input2 = driver.find_element_by_class_name("text-dst")
-                ret = input2.text
-                print(ret)
-                input3 = driver.find_element_by_class_name("tool-close")
-                input3.click()
-            except(ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException, ee.ElementNotInteractableException):
-                driver.close()
-                retPool[str(index)]["state"] = 0
-                break
-
-            #将结果保存在retPool,index中
-            retPool[str(index)]["temp"] = ret
-            retPool[str(index)]["state"] = 1
-            retPool["num"] += 1
-
-def buildTranslatorPool():
-    # 创建两个线程
-    try:
-        N = 32
-        for i in range(N):
-            options = Options()
-            options.add_argument('-headless')
-            driver = Firefox(executable_path='geckodriver', firefox_options=options)
-            driver.get("https://fanyi.qq.com/")
-            _thread.start_new_thread(translator, ("Thread-"+str(i), lock, driver))
-            print("build " + str(i) + " finished!")
-        print("all build "+ str(N) + " finished!")
-    except:
-        print("Error: 无法启动线程")
-
-
-
-def fanyi(retPool, queue):
-    retPool["num"] = 0
-    for i in range(len(queue)):
-        retPool[str(i)] = {
-            "state": 0,
-            "temp":queue[i]
-        }
-    retPool["targetsnum"] = len(queue)
-
-
-def getRet(retPool, targets, type):
-    if retPool["targetsnum"] == retPool["num"]:
-        # 检查是否已经完成,如果完成，就填到target中
-        lock["state"] = 1
-        for i in range(retPool["num"]):
-            ret = retPool[str(i)]["temp"]
-            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
-            targets.append(count)
-            # 重置retPool
-            retPool["num"] = 0
-        return True
-    return False
-
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
+
+locks = {
+}
+retPools = {}
 
 # MIME-TYPE
 mimedic = [
@@ -136,6 +27,124 @@ mimedic = [
     ('.txt', 'text/plain'),
     ('.avi', 'video/x-msvideo')]
 
+def getOneQueue(pid):
+    for i in range(retPools[pid]["targetsnum"]):
+        if retPools[pid][str(i)]["state"] == 0:
+            retPools[pid][str(i)]["state"] = 2
+            return retPools[pid][str(i)]["temp"], i
+    return "",-1
+
+# 为线程定义一个函数
+def translator(name, driver):
+    time.sleep(5)
+    ret = ""
+    while True:
+        lens = len(retPools)
+        if lens == 0:
+            continue
+
+        findRetPool = None
+        nowstr = ""
+        index = 0
+        for key in list(retPools.keys()):
+            retPool = retPools[key]
+            if retPool["num"] != retPool["targetsnum"] and locks[retPool["pid"]] == 0:
+                #需要取一个进行翻译
+                locks[retPool["pid"]]= 1
+                nowstr, index = getOneQueue(retPool["pid"])
+                locks[retPool["pid"]] = 0
+                if index != -1:
+                    findRetPool = retPool
+                    break
+
+        if findRetPool:
+
+            # 开始翻译
+            try:
+                # stopword = ":q"
+                # file_content = ""
+                # print("请输入内容【单独输入‘:q‘保存退出】：")
+                # for line in iter(input, stopword):
+                #     file_content = file_content + line + "\n"
+                aa = nowstr.replace('\n', ' ')
+                if aa.count(" ") > 0:
+                    input1 = driver.find_element_by_class_name("textinput")
+
+                    input1.send_keys(aa)
+                    input1.send_keys('\n')
+                    wait = WebDriverWait(driver, 10)
+                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-dst")))
+                    input2 = driver.find_element_by_class_name("text-dst")
+                    ret = str(input2.text)
+                    findRet = ret.find('/')
+                    if findRet != -1:
+                        ret = ret[0:findRet]
+                    print(ret)
+                    input3 = driver.find_element_by_class_name("tool-close")
+                    input3.click()
+                else:
+                    ret = aa
+                    print(ret)
+            except(
+            ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException,
+            ee.ElementNotInteractableException):
+                driver.close()
+                findRetPool[str(index)]["state"] = 0
+                break
+
+            # 将结果保存在retPool,index中
+            findRetPool[str(index)]["temp"] = ret
+            findRetPool[str(index)]["state"] = 1
+            findRetPool["num"] += 1
+
+
+def buildTranslatorPool():
+    # 创建两个线程
+    try:
+        N = 32
+        for i in range(N):
+            options = Options()
+            options.add_argument('-headless')
+            driver = Firefox(executable_path='geckodriver', firefox_options=options)
+            driver.get("https://fanyi.qq.com/")
+            _thread.start_new_thread(translator, ("Thread-"+str(i), driver))
+            print("build " + str(i) + " finished!")
+        print("all build "+ str(N) + " finished!")
+    except:
+        print("Error: 无法启动线程")
+
+def fanyi(retPools, pid, queue):
+    retPool = {
+        "num": 0,
+        "targetsnum": 0,
+        "pid": pid
+    }
+    retPools[pid] = retPool
+
+    retPool["num"] = 0
+    for i in range(len(queue)):
+        retPool[str(i)] = {
+            "state": 0,
+            "temp": queue[i]
+        }
+    retPool["targetsnum"] = len(queue)
+
+def getRet(retPool, targets, type):
+    if retPool["targetsnum"] == retPool["num"]:
+        # 检查是否已经完成,如果完成，就填到target中
+        locks[retPool["pid"]] = 1
+        for i in range(retPool["num"]):
+            ret = retPool[str(i)]["temp"]
+            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
+            targets.append(count)
+            # 重置retPool
+            retPool["num"] = 0
+        return True
+    return False
+
+
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
 
 class PostHandler(BaseHTTPRequestHandler):
     # GET
@@ -178,12 +187,13 @@ class PostHandler(BaseHTTPRequestHandler):
             "rc":0,
         }
         #异步处理
-        lock["state"] = 1
-        fanyi(retPool, queue)
-        lock["state"] = 0
+        sessionIdStr = str(time.time())
+        locks[sessionIdStr] = 1
+        fanyi(retPools, sessionIdStr, queue)
+        locks[sessionIdStr] = 0
 
         while True:
-            finished = getRet(retPool, data["target"], type)
+            finished = getRet(retPools[sessionIdStr], data["target"], type)
             if finished:
                 break
 
@@ -209,8 +219,13 @@ class PostHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 def start_server():
-    sever = HTTPServer(("", 9999), PostHandler)
-    sever.serve_forever()
+    host = '127.0.0.1'
+    port = 9999
+    httpd = ThreadingHTTPServer((host, port), PostHandler)
+    try:
+        httpd.serve_forever()
+    except (KeyboardInterrupt, ConnectionAbortedError):
+        httpd.server_close()
 
 if __name__ == '__main__':
     _thread.start_new_thread(buildTranslatorPool,())
