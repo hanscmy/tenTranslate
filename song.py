@@ -67,14 +67,14 @@ def translator(name, driver):
                 # for line in iter(input, stopword):
                 #     file_content = file_content + line + "\n"
                 aa = nowstr.replace('\n', ' ')
-                if aa.count(" ") > 0:
+                if aa.count(" ") > -1:
                     input1 = driver.find_element_by_class_name("textinput")
 
                     input1.send_keys(aa)
                     input1.send_keys('\n')
                     wait = WebDriverWait(driver, 10)
                     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-dst")))
-                    input2 = driver.find_element_by_class_name("text-dst")
+                    input2 = driver.find_element_by_class_name("textpanel-target-textblock")
                     ret = str(input2.text)
                     findRet = ret.find('/')
                     if findRet != -1:
