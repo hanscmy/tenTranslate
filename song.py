@@ -9,10 +9,12 @@ from selenium.webdriver.common.by import By
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-
+# taskkill /F /IM "firefox.exe"
+# C:\Users\Administrator\AppData\Local\Programs\Python\Python37\python.exe C:/Users/Administrator/PycharmProjects/tenTranslate/song.py
 locks = {
 }
 retPools = {}
+eache = {}
 
 # MIME-TYPE
 mimedic = [
@@ -58,7 +60,6 @@ def translator(name, driver):
                     break
 
         if findRetPool:
-
             # 开始翻译
             try:
                 # stopword = ":q"
@@ -67,7 +68,13 @@ def translator(name, driver):
                 # for line in iter(input, stopword):
                 #     file_content = file_content + line + "\n"
                 aa = nowstr.replace('\n', ' ')
-                if aa.count(" ") > -1:
+
+                # 使用缓存
+                if aa.count(" ") < 6 and eache.get(aa.lower()):
+                    # 使用缓存
+                    ret = eache[aa.lower()]
+
+                elif aa.count(" ") > -1:
                     input1 = driver.find_element_by_class_name("textinput")
 
                     input1.send_keys(aa)
@@ -77,14 +84,14 @@ def translator(name, driver):
                     input2 = driver.find_element_by_class_name("textpanel-target-textblock")
                     ret = str(input2.text)
                     findRet = ret.find('/')
-                    if findRet != -1:
+                    if findRet != -1 and aa.count(" ") == 0:
                         ret = ret[0:findRet]
                     print(ret)
                     input3 = driver.find_element_by_class_name("tool-close")
                     input3.click()
-                else:
-                    ret = aa
-                    print(ret)
+
+                    # 保存缓存
+                    eache[aa] = ret
             except(
             ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException,
             ee.ElementNotInteractableException):
@@ -101,7 +108,7 @@ def translator(name, driver):
 def buildTranslatorPool():
     # 创建两个线程
     try:
-        N = 32
+        N = 24
         for i in range(N):
             options = Options()
             options.add_argument('-headless')
@@ -203,7 +210,7 @@ class PostHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With")
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, "
-                                                         "X-Authorization")
+                                                         "X-Authorization, Referrer")
         self.send_header("Access-Control-Allow-Credentials", 'true')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
@@ -214,7 +221,7 @@ class PostHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With")
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, "
-                                                         "X-Authorization")
+                                                         "X-Authorization, Referrer")
         self.send_header("Access-Control-Allow-Credentials", 'true')
         self.end_headers()
 
