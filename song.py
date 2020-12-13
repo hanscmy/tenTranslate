@@ -9,13 +9,14 @@ from selenium.webdriver.common.by import By
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
+import redis
 import re
 # taskkill /F /IM "firefox.exe"
 # C:\Users\Administrator\AppData\Local\Programs\Python\Python37\python.exe C:/Users/Administrator/PycharmProjects/tenTranslate/song.py
 locks = {
 }
 retPools = {}
-eache = {}
+eache = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 # MIME-TYPE
 mimedic = [
@@ -73,7 +74,7 @@ def translator(name, driver):
                 # 使用缓存
                 if aa.count(" ") < 6 and eache.get(aa.lower()):
                     # 使用缓存
-                    ret = eache[aa.lower()]
+                    ret = eache.get(aa.lower())
 
                 elif aa.count(" ") > -1:
                     input1 = driver.find_element_by_class_name("textinput")
@@ -93,8 +94,7 @@ def translator(name, driver):
                     input3.click()
 
                     # 保存缓存
-                    eache[aa.lower()] = ret
-                    print("eache has " + str(len(eache)))
+                    eache.set(aa.lower(), ret)
             except(
             ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException,
             ee.ElementNotInteractableException):
