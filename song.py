@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
+import re
 # taskkill /F /IM "firefox.exe"
 # C:\Users\Administrator\AppData\Local\Programs\Python\Python37\python.exe C:/Users/Administrator/PycharmProjects/tenTranslate/song.py
 locks = {
@@ -86,12 +87,14 @@ def translator(name, driver):
                     findRet = ret.find('/')
                     if findRet != -1 and aa.count(" ") == 0:
                         ret = ret[0:findRet]
+                    # ret = re.sub("\n", "", ret)
                     print(ret)
                     input3 = driver.find_element_by_class_name("tool-close")
                     input3.click()
 
                     # 保存缓存
-                    eache[aa] = ret
+                    eache[aa.lower()] = ret
+                    print("eache has " + str(len(eache)))
             except(
             ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException,
             ee.ElementNotInteractableException):
@@ -103,7 +106,6 @@ def translator(name, driver):
             findRetPool[str(index)]["temp"] = ret
             findRetPool[str(index)]["state"] = 1
             findRetPool["num"] += 1
-
 
 def buildTranslatorPool():
     # 创建两个线程
@@ -148,7 +150,6 @@ def getRet(retPool, targets, type):
             retPool["num"] = 0
         return True
     return False
-
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
