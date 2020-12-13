@@ -74,7 +74,7 @@ def translator(name, driver):
                 # 使用缓存
                 if aa.count(" ") < 10 and eache.get(aa.lower()):
                     # 使用缓存
-                    ret = eache.get(aa.lower())
+                    ret = str(eache.get(aa.lower()))
 
                 elif aa.count(" ") > -1:
                     input1 = driver.find_element_by_class_name("textinput")
