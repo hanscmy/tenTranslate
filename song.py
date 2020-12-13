@@ -72,7 +72,7 @@ def translator(name, driver):
                 aa = nowstr.replace('\n', ' ')
 
                 # 使用缓存
-                if aa.count(" ") < 6 and eache.get(aa.lower()):
+                if aa.count(" ") < 10 and eache.get(aa.lower()):
                     # 使用缓存
                     ret = eache.get(aa.lower())
 
