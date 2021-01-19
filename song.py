@@ -1,22 +1,37 @@
+#!/usr/bin/env python
+# coding: utf-8
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 import json
 import _thread
-from selenium.webdriver import Firefox
-from selenium.webdriver.firefox.options import Options
-import selenium.common.exceptions as ee
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
+# from selenium.webdriver import Firefox
+# from selenium.webdriver.firefox.options import Options
+# import selenium.common.exceptions as ee
+# from selenium.webdriver.support.wait import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
+# from selenium.webdriver.common.by import By
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-import redis
+# import redis
 import re
+import Tencent
 # taskkill /F /IM "firefox.exe"
 # C:\Users\Administrator\AppData\Local\Programs\Python\Python37\python.exe C:/Users/Administrator/PycharmProjects/tenTranslate/song.py
 locks = {
 }
 retPools = {}
-eache = redis.StrictRedis(host='localhost', port=6379, db=0)
+# eache = redis.StrictRedis(host='localhost', port=6379, db=0)
+# class Eache():
+#     def __init__(self):
+#         self.content = {}
+#     def get(self, key):
+#         return self.content[key]
+#     def set(self, key, value):
+#         content[key] = value
+# eache = Eache()
 
 # MIME-TYPE
 mimedic = [
@@ -62,45 +77,16 @@ def translator(name, driver):
                     break
 
         if findRetPool:
-            # 开始翻译
-            try:
-                # stopword = ":q"
-                # file_content = ""
-                # print("请输入内容【单独输入‘:q‘保存退出】：")
-                # for line in iter(input, stopword):
-                #     file_content = file_content + line + "\n"
-                aa = nowstr.replace('\n', ' ')
+            aa = nowstr.replace('\n', ' ')
 
-                # 使用缓存
-                if aa.count(" ") < 10 and eache.get(aa.lower()):
-                    # 使用缓存
-                    ret = str(eache.get(aa.lower()))
+            if aa.count(" ") > -1:
 
-                elif aa.count(" ") > -1:
-                    input1 = driver.find_element_by_class_name("textinput")
+                # 1.使用api
+                ret = driver.get_trans_result(aa)
 
-                    input1.send_keys(aa)
-                    input1.send_keys('\n')
-                    wait = WebDriverWait(driver, 10)
-                    wait.until(EC.presence_of_element_located((By.CLASS_NAME, "text-dst")))
-                    input2 = driver.find_element_by_class_name("textpanel-target-textblock")
-                    ret = str(input2.text)
-                    findRet = ret.find('/')
-                    if findRet != -1 and aa.count(" ") == 0:
-                        ret = ret[0:findRet]
-                    # ret = re.sub("\n", "", ret)
-                    print(ret)
-                    input3 = driver.find_element_by_class_name("tool-close")
-                    input3.click()
-
-                    # 保存缓存
-                    eache.set(aa.lower(), ret)
-            except(
-            ee.NoSuchElementException, ee.InvalidSessionIdException, ee.TimeoutException, ee.StaleElementReferenceException,
-            ee.ElementNotInteractableException):
-                driver.close()
-                findRetPool[str(index)]["state"] = 0
-                break
+                print(ret)
+                # 保存缓存
+                # eache.set(aa.lower(), ret)
 
             # 将结果保存在retPool,index中
             findRetPool[str(index)]["temp"] = ret
@@ -110,12 +96,10 @@ def translator(name, driver):
 def buildTranslatorPool():
     # 创建两个线程
     try:
-        N = 24
-        for i in range(N):
-            options = Options()
-            options.add_argument('-headless')
-            driver = Firefox(executable_path='geckodriver', firefox_options=options)
-            driver.get("https://fanyi.qq.com/")
+        N = 1
+        for i in rnge(N):
+            driver = Tencent.TencentTrans()
+
             _thread.start_new_thread(translator, ("Thread-"+str(i), driver))
             print("build " + str(i) + " finished!")
         print("all build "+ str(N) + " finished!")
