@@ -79,6 +79,7 @@ def translator(name, driver):
         if findRetPool:
             aa = nowstr.replace('\n', ' ')
 
+            ret = ""
             if aa.count(" ") > -1:
 
                 # 1.使用api
@@ -89,6 +90,7 @@ def translator(name, driver):
                 # eache.set(aa.lower(), ret)
 
             # 将结果保存在retPool,index中
+
             findRetPool[str(index)]["temp"] = ret
             findRetPool[str(index)]["state"] = 1
             findRetPool["num"] += 1
@@ -96,8 +98,8 @@ def translator(name, driver):
 def buildTranslatorPool():
     # 创建两个线程
     try:
-        N = 1
-        for i in rnge(N):
+        N = 8
+        for i in range(N):
             driver = Tencent.TencentTrans()
 
             _thread.start_new_thread(translator, ("Thread-"+str(i), driver))
@@ -121,6 +123,22 @@ def fanyi(retPools, pid, queue):
             "temp": queue[i]
         }
     retPool["targetsnum"] = len(queue)
+
+def fanyi1(data, driver, queue, type):
+    for i in range(len(queue)):
+        nowstr = queue[i]
+        aa = nowstr.replace('\n', ' ')
+
+        ret = ""
+        if aa.count(" ") > -1:
+            ret = driver.get_trans_result(aa)
+            print(ret)
+            index = ret.find("/")
+            if index != -1:
+                ret = ret[0:index-1]
+        count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
+        data["target"].append(count)
+
 
 def getRet(retPool, targets, type):
     if retPool["targetsnum"] == retPool["num"]:
@@ -166,6 +184,7 @@ class PostHandler(BaseHTTPRequestHandler):
         #         self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_POST(self):
+        driver = Tencent.TencentTrans()
         req_datas = self.rfile.read(int(self.headers['content-length']))  # 重点在此步!
         info = req_datas.decode()
         jinfo = json.loads(info)
@@ -179,23 +198,24 @@ class PostHandler(BaseHTTPRequestHandler):
             "rc":0,
         }
         #异步处理
-        sessionIdStr = str(time.time())
-        locks[sessionIdStr] = 1
-        fanyi(retPools, sessionIdStr, queue)
-        locks[sessionIdStr] = 0
+        # sessionIdStr = str(time.time())
+        # locks[sessionIdStr] = 1
+        fanyi1(data, driver, queue, type)
+        # locks[sessionIdStr] = 0
 
-        while True:
-            finished = getRet(retPools[sessionIdStr], data["target"], type)
-            if finished:
-                break
 
-        self.send_response(200)
+        # while True:
+        #     finished = getRet(retPools[sessionIdStr], data["target"], type)
+        #     if finished:
+        #         break
+
+        self.send_response(200, "ok")
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', "*")
         self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.send_header("Access-Control-Allow-Headers", "X-Requested-With")
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, "
-                                                         "X-Authorization, Referrer")
+                                                         "X-Authorization, Referrer, Self")
         self.send_header("Access-Control-Allow-Credentials", 'true')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
@@ -212,13 +232,13 @@ class PostHandler(BaseHTTPRequestHandler):
 
 def start_server():
     host = '127.0.0.1'
-    port = 9999
+    port = 9991
     httpd = ThreadingHTTPServer((host, port), PostHandler)
     try:
         httpd.serve_forever()
-    except (KeyboardInterrupt, ConnectionAbortedError):
+    except (KeyboardInterrupt):
         httpd.server_close()
 
 if __name__ == '__main__':
-    _thread.start_new_thread(buildTranslatorPool,())
+    # _thread.start_new_thread(buildTranslatorPool,())
     start_server()
