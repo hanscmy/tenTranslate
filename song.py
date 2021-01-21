@@ -226,6 +226,7 @@ class PostHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, "
                                                          "X-Authorization, Referrer")
         self.send_header("Access-Control-Allow-Credentials", 'true')
+        self.send_header("Access-Control-Max-Age", 86400)
         self.end_headers()
 
 def start_server():
