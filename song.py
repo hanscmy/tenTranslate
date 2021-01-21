@@ -212,7 +212,7 @@ class PostHandler(BaseHTTPRequestHandler):
         self.send_response(200, "ok")
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', "*")
-        self.send_header('Access-Control-Allow-Methods', 'POST, GET')
+        self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.send_header("Access-Control-Expose-Headers", 'Origin, X-Requested-With, Content-Type, Accept, '
                                                          'X-Authorization, Referrer, Self')
         self.send_header("Access-Control-Allow-Credentials", 'true')
