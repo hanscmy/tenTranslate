@@ -15,15 +15,16 @@ import _thread
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-# import redis
+import redis
 import re
 import Tencent
+Tencen = Tencent.TencentTrans()
 # taskkill /F /IM "firefox.exe"
 # C:\Users\Administrator\AppData\Local\Programs\Python\Python37\python.exe C:/Users/Administrator/PycharmProjects/tenTranslate/song.py
 locks = {
 }
 retPools = {}
-# eache = redis.StrictRedis(host='localhost', port=6379, db=0)
+eache = redis.StrictRedis(host='localhost', port=6379, db=0)
 # class Eache():
 #     def __init__(self):
 #         self.content = {}
@@ -83,9 +84,7 @@ def translator(name, driver):
 
                 # 1.使用api
                 ret = driver.get_trans_result(aa)
-                gangi = ret.find("/")
-                if gangi != -1:
-                    ret = ret[gangi:]
+
                 print(ret)
                 # 保存缓存
                 # eache.set(aa.lower(), ret)
@@ -99,7 +98,7 @@ def translator(name, driver):
 def buildTranslatorPool():
     # 创建两个线程
     try:
-        N = 10
+        N = 0
         for i in range(N):
             driver = Tencent.TencentTrans()
 
@@ -169,12 +168,17 @@ class PostHandler(BaseHTTPRequestHandler):
         #         self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_POST(self):
+        driver = Tencent.TencentTrans()
         req_datas = self.rfile.read(int(self.headers['content-length']))  # 重点在此步!
         info = req_datas.decode()
         jinfo = json.loads(info)
         type = jinfo['trans_type']
         pid = jinfo['page_id']
         queue = jinfo["source"]
+        url = jinfo["url"]
+        isyoutubetitle = False
+        if url.find("youtube") != -1 and len(queue) == 2:
+            isyoutubetitle = True
         data = {
             "confidence": 0.8,
             "page_id": pid,
@@ -182,15 +186,41 @@ class PostHandler(BaseHTTPRequestHandler):
             "rc":0,
         }
         #异步处理
-        sessionIdStr = str(time.time())
-        locks[sessionIdStr] = 1
-        fanyi(retPools, sessionIdStr, queue)
-        locks[sessionIdStr] = 0
+        # sessionIdStr = str(time.time())
+        for i in range(len(queue)):
+            aa = queue[i]
+            aa = aa.replace('\n', ' ')
+            # aa = aa.lower()
+            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": "", "trans_type": type}
+            ret = ""
 
-        while True:
-            finished = getRet(retPools[sessionIdStr], data["target"], type)
-            if finished:
-                break
+            if isyoutubetitle and i == 0:
+                ret = ""
+            elif aa.count(" ") < 7 and eache.get(aa) and type[0:2] == "en":
+                ret = str(eache.get(aa), encoding="utf-8")
+            else:
+                if isyoutubetitle and i == 1:
+                    aa = queue[0] + queue[1]
+                ret = driver.get_trans_result(aa)
+                gangi = ret.find("/")
+                if aa.count(" ") < 2 and gangi != -1:
+                    ret = ret[0:gangi-1]
+                print(ret)
+                if aa.count(" ") < 7 and type[0:2] == "en":
+                    eache.set(aa, ret)
+            ret = '''
+            '''+ret
+            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
+            data["target"].append(count)
+
+        # locks[sessionIdStr] = 1
+        # fanyi(retPools, sessionIdStr, queue)
+        # locks[sessionIdStr] = 0
+
+        # while True:
+        #     finished = getRet(retPools[sessionIdStr], data["target"], type)
+        #     if finished:
+        #         break
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
