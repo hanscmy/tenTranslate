@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+import random
 import re
 import time
 import requests
@@ -70,13 +70,11 @@ class TencentTrans(object):
         
         self.api_url = 'https://fanyi.qq.com/api/translate'
         self.headers = {
-            'Cookie': 'fy_guid=605ead81-f210-47eb-bd80-ac6ae5e7a2d8; '
-                      'qtv=ed286a053ae88763; '
-                      'qtk=wfMmjh3k/7Sr2xVNg/LtITgPRlnvGWBzP9a4FN0dn9PE7L5jDYiYJnW03MJLRUGHEFNCRhTfrp/V+wUj0dun1KkKNUUmS86A/wGVf6ydzhwboelTOs0hfHuF0ndtSoX+N3486tUMlm62VU4i856mqw==; ',
+            'Cookie': '',
             'Host': 'fanyi.qq.com',
             'Origin': 'https://fanyi.qq.com',
             'Referer': 'https://fanyi.qq.com/',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
+            'User-Agent': 'Mozilla/4.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, '
                           'like Gecko) Chrome/73.0.3683.86 Safari/537.36', }
 
         self.fromlang = 'auto'
@@ -84,7 +82,7 @@ class TencentTrans(object):
         self.sessionUuid = str(int(time.time() * 1000))
 
         self.fy_guid, self.qtv, self.qtk = get_qtv_qtk()
-
+        self.headers['X-Forwarded-For'] = self.get_ip()
         self.headers['Cookie'] = self.headers['Cookie'].replace(
             '605ead81-f210-47eb-bd80-ac6ae5e7a2d8', self.fy_guid)
 
@@ -93,10 +91,15 @@ class TencentTrans(object):
         self.headers['Cookie'] = self.headers['Cookie'].replace(
             'wfMmjh3k/7Sr2xVNg/LtITgPRlnvGWBzP9a4FN0dn9PE7L5jDYiYJnW03MJLRUGHEFNCRhTfrp/V+wUj0dun1KkKNUUmS86A/wGVf6ydzhwboelTOs0hfHuF0ndtSoX+N3486tUMlm62VU4i856mqw==',
             self.qtk)
-
+    def get_ip(self):
+        return ""+str(random.randint(20,190))+"."+\
+               str(random.randint(20,190))+"."+\
+               str(random.randint(20,190))+"."+\
+               str(random.randint(20,190))
 
     def get_trans_result(self, text):
-        
+
+
         data = {
                 'source': self.fromlang,
                 'target': self.tolang,
