@@ -207,7 +207,6 @@ class PostHandler(BaseHTTPRequestHandler):
                 gangi = ret.find("/")
                 if aa.count(" ") < 2 and gangi != -1:
                     ret = ret[0:gangi-1]
-                print("")
                 print("原文： "+aa)
                 print("译文： "+ret)
                 print("")
