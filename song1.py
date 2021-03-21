@@ -140,6 +140,8 @@ def getRet(retPool, targets, type):
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
+
+driver = Tencent.TencentTrans()
 class PostHandler(BaseHTTPRequestHandler):
     # GET
     def do_GET(self):
@@ -168,7 +170,6 @@ class PostHandler(BaseHTTPRequestHandler):
         #         self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_POST(self):
-        driver = Tencent.TencentTrans()
         req_datas = self.rfile.read(int(self.headers['content-length']))  # 重点在此步!
         info = req_datas.decode()
         jinfo = json.loads(info)
@@ -196,7 +197,8 @@ class PostHandler(BaseHTTPRequestHandler):
 
             if isyoutubetitle and i == 0:
                 ret = ""
-            elif aa.count(" ") < 7 and eache.get(aa) and type[0:2] == "en":
+            elif (len(aa) < 80 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa)\
+                    and eache.get(aa) != "网页腾讯：我抽风了":
                 ret = str(eache.get(aa), encoding="utf-8")
             else:
                 if isyoutubetitle and i == 1:
@@ -205,8 +207,9 @@ class PostHandler(BaseHTTPRequestHandler):
                 gangi = ret.find("/")
                 if aa.count(" ") < 2 and gangi != -1:
                     ret = ret[0:gangi-1]
+                print(aa)
                 print(ret)
-                if aa.count(" ") < 7 and type[0:2] == "en":
+                if len(aa) < 80 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
                     eache.set(aa, ret)
             ret = '''
             '''+ret

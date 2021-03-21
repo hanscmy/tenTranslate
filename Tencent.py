@@ -58,9 +58,9 @@ def getHtml(url,headers,data):
             trans_result = ''.join([data['targetText'] for data in datas])
 
     except Exception:
-        print_exc()
-        trans_result = '网页腾讯：我抽风啦！'
-    
+        # print_exc()
+        trans_result = '1331'
+
     return trans_result
 
 
@@ -110,7 +110,9 @@ class TencentTrans(object):
                }
 
         trans_result = getHtml(self.api_url, self.headers, data)
-        
+        while trans_result == "1331" or not len(trans_result):
+            self.__init__()
+            trans_result = getHtml(self.api_url, self.headers, data)
         return trans_result
 
 
