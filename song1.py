@@ -197,8 +197,7 @@ class PostHandler(BaseHTTPRequestHandler):
 
             if isyoutubetitle and i == 0:
                 ret = ""
-            elif (len(aa) < 80 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa)\
-                    and eache.get(aa) != "网页腾讯：我抽风了":
+            elif (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
                 ret = str(eache.get(aa), encoding="utf-8")
             else:
                 if isyoutubetitle and i == 1:
@@ -210,7 +209,7 @@ class PostHandler(BaseHTTPRequestHandler):
                 print("原文： "+aa)
                 print("译文： "+ret)
                 print("")
-                if len(aa) < 80 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
                     eache.set(aa, ret)
             ret = '''
             '''+ret
