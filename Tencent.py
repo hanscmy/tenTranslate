@@ -52,8 +52,12 @@ def getHtml(url,headers,data):
 
     try:
         html= requests.post(url=url,data= data,headers=headers)
-        datas = html.json()['translate']['records']
-        
+        datas = html.json()
+        if datas:
+            datas = datas['translate']
+        if datas:
+            datas = datas['records']
+
         if html!=None and datas != None :
             trans_result = ''.join([data['targetText'] for data in datas])
 
