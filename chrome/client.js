@@ -454,8 +454,8 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
             }
 
             function o(e, t, n, r) {
-                var i = 25;
-                for (n && (i = n); e.length > 0;) {
+                var i = 5;
+                for (; e.length > 0;) {
                     var o = e.splice(0, i);
                     a(o, t, r)
                 }
