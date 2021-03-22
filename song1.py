@@ -143,18 +143,20 @@ driver_lock = threading.Lock()
 
 def getDriver():
     # with driver_lock:
-        while len(driverss):
-            nextDriver = driverss.pop()
-            curTime = time.time()
-            if curTime - nextDriver.time < 30:
-                return nextDriver
+    #     while len(driverss):
+    #         nextDriver = driverss.pop()
+    #         curTime = time.time()
+    #         if curTime - nextDriver.time < 30:
+    #             return nextDriver
         new_driver = Tencent.TencentTrans()
         return new_driver
 
 def backDriver(driver):
-    curTime = time.time()
-    if curTime - driver.time < 30:
-        driverss.append(driver)
+    pass
+    # curTime = time.time()
+    # if curTime - driver.time < 30:
+    #     with driver_lock:
+    #         driverss.append(driver)
 
 
 def buildTranslatorPoolNew():
@@ -167,7 +169,6 @@ def buildTranslatorPoolNew():
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
-
 
 class PostHandler(BaseHTTPRequestHandler):
     # GET
@@ -210,46 +211,54 @@ class PostHandler(BaseHTTPRequestHandler):
         data = {
             "confidence": 0.8,
             "page_id": pid,
-            "target": [],
+            "target": [None]*len(queue),
             "rc":0,
         }
         #异步处理
         # sessionIdStr = str(time.time())
+        finishedInfo = {"num":0}
         for i in range(len(queue)):
-            aa = queue[i]
-            aa = aa.replace('\n', ' ')
-            # aa = aa.lower()
-            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": "", "trans_type": type}
-            ret = ""
 
-            if isyoutubetitle and i == 0:
-                ret = ""
-            elif (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
-                ret = str(eache.get(aa), encoding="utf-8")
-            else:
-                if isyoutubetitle and i == 1:
-                    aa = queue[0] + queue[1]
-                driver = getDriver()
-                ret = driver.get_trans_result(aa)
-                count = 1
-                while count < 10 and (ret == "1331" or ret.count("。") > len(ret)/3 or\
-                        len(ret) == 0 or ret == " " or ret == "  " or ret == "   "):
+            def fanyiinner(index, data, finishedInfo):
+                aa = queue[index]
+                aa = aa.replace('\n', ' ')
+                # aa = aa.lower()
+
+                if isyoutubetitle and i == 0:
+                    ret = ""
+                elif (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
+                    ret = str(eache.get(aa), encoding="utf-8")
+                else:
+                    if isyoutubetitle and i == 1:
+                        aa = queue[0] + queue[1]
                     driver = getDriver()
+
                     ret = driver.get_trans_result(aa)
-                    count += 1
-                backDriver(driver)
-                gangi = ret.find("/")
-                print("原文： " + aa)
-                print("译文： " + ret)
-                print("")
-                if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
-                    ret = ret[0:gangi-1]
-                if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
-                    eache.set(aa, ret)
-            ret = '''
-            '''+ret
-            count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
-            data["target"].append(count)
+                    count = 1
+                    while count < 10 and (ret == "1331" or ret.count("。") > len(ret) / 3 or len(ret) == 0 or ret == " " or ret == "  " or ret == "   "):
+                        driver = getDriver()
+                        ret = driver.get_trans_result(aa)
+                        count += 1
+                    backDriver(driver)
+                    gangi = ret.find("/")
+                    print("原文： " + aa)
+                    print("译文： " + ret)
+                    print("")
+                    if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
+                        ret = ret[0:gangi - 1]
+                    if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                        eache.set(aa, ret)
+                ret = '''
+                            ''' + ret
+                count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
+                finishedInfo["num"] += 1
+                data["target"][index] = count
+
+            _thread.start_new_thread(fanyiinner, (i, data, finishedInfo))
+            # fanyiinner(i, data, finishedInfo)
+
+        while finishedInfo["num"] < len(queue):
+            continue
 
         # locks[sessionIdStr] = 1
         # fanyi(retPools, sessionIdStr, queue)
