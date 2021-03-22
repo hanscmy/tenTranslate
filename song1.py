@@ -12,6 +12,7 @@ import _thread
 # from selenium.webdriver.support.wait import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.common.by import By
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
@@ -137,11 +138,31 @@ def getRet(retPool, targets, type):
         return True
     return False
 
+driverss = []
+driver_lock = threading.Lock()
+
+def getDriver():
+    with driver_lock:
+        if len(driverss):
+            nextDriver = driverss.pop()
+            return nextDriver
+        new_driver = Tencent.TencentTrans()
+        return new_driver
+
+def backDriver(driver):
+    with driver_lock:
+        driverss.append(driver)
+
+def buildTranslatorPoolNew():
+    while True:
+        while len(driverss) < 200:
+            new_driver = Tencent.TencentTrans()
+            backDriver(new_driver)
+            print("翻译者有：！！！！！！！！！！！！！！！！！！！！！！！！！！！" + str(len(driverss)) + "个")
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
-driver = Tencent.TencentTrans()
 class PostHandler(BaseHTTPRequestHandler):
     # GET
     def do_GET(self):
@@ -170,6 +191,8 @@ class PostHandler(BaseHTTPRequestHandler):
         #         self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_POST(self):
+        driver = getDriver()
+        # driver = getDriver()
         req_datas = self.rfile.read(int(self.headers['content-length']))  # 重点在此步!
         info = req_datas.decode()
         jinfo = json.loads(info)
@@ -203,12 +226,16 @@ class PostHandler(BaseHTTPRequestHandler):
                 if isyoutubetitle and i == 1:
                     aa = queue[0] + queue[1]
                 ret = driver.get_trans_result(aa)
+                while ret == "1331" or ret.count("。。") > 0:
+                    driver = getDriver()
+                    ret = driver.get_trans_result(aa)
+
                 gangi = ret.find("/")
-                if aa.count(" ") < 2 and gangi != -1:
-                    ret = ret[0:gangi-1]
-                print("原文： "+aa)
-                print("译文： "+ret)
+                print("原文： " + aa)
+                print("译文： " + ret)
                 print("")
+                if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
+                    ret = ret[0:gangi-1]
                 if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
                     eache.set(aa, ret)
             ret = '''
@@ -224,7 +251,7 @@ class PostHandler(BaseHTTPRequestHandler):
         #     finished = getRet(retPools[sessionIdStr], data["target"], type)
         #     if finished:
         #         break
-
+        # backDriver(driver)
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', "*")
@@ -256,5 +283,5 @@ def start_server():
         httpd.server_close()
 
 if __name__ == '__main__':
-    _thread.start_new_thread(buildTranslatorPool,())
+    _thread.start_new_thread(buildTranslatorPoolNew,())
     start_server()

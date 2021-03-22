@@ -62,6 +62,7 @@ def get_filter(text):
 
 
 def get_qtv_qtk():
+    num = 0
     while True:
         api_url = 'https://fanyi.qq.com/'
 
@@ -75,6 +76,7 @@ def get_qtv_qtk():
         reg = re.compile(r'reauthuri = "(.*?)"')
         uri = reg.search(data)
         if not uri:
+            num += 1
             continue
         uri = uri.group(1)
         api_url = 'https://fanyi.qq.com/api/' + uri
@@ -86,6 +88,7 @@ def get_qtv_qtk():
         json_res = json.loads(res.text)
         qtv = json_res["qtv"]
         qtk = json_res["qtk"]
+        # print("我尝试连接了"+str(num)+"次")
         return fy_guid, qtv, qtk
 
 
@@ -112,7 +115,8 @@ def getHtml(url,headers,data):
 class TencentTrans(object):
     
     def __init__(self):
-        
+        self.time = 0
+
         self.api_url = 'https://fanyi.qq.com/api/translate'
         self.headers = {
             'Cookie': '',
@@ -155,10 +159,8 @@ class TencentTrans(object):
                 'sessionUuid': self.sessionUuid
                }
 
+        self.headers['X-Forwarded-For'] = self.get_ip()
         trans_result = getHtml(self.api_url, self.headers, data)
-        while trans_result == "1331" or not len(trans_result):
-            self.__init__()
-            trans_result = getHtml(self.api_url, self.headers, data)
         return trans_result
 
 
