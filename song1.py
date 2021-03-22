@@ -226,7 +226,7 @@ class PostHandler(BaseHTTPRequestHandler):
                 if isyoutubetitle and i == 1:
                     aa = queue[0] + queue[1]
                 ret = driver.get_trans_result(aa)
-                while ret == "1331" or ret.count("。。") > 0:
+                while ret == "1331" or ret.count("。") > len(ret)/3:
                     driver = getDriver()
                     ret = driver.get_trans_result(aa)
 
