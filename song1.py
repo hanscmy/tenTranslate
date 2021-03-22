@@ -146,16 +146,15 @@ def getDriver():
         while len(driverss):
             nextDriver = driverss.pop()
             curTime = time.time()
-            if curTime - nextDriver.time < 120:
+            if curTime - nextDriver.time < 30:
                 return nextDriver
         new_driver = Tencent.TencentTrans()
         return new_driver
 
 def backDriver(driver):
     curTime = time.time()
-    if curTime - driver.time < 120:
-        with driver_lock:
-            driverss.append(driver)
+    if curTime - driver.time < 30:
+        driverss.append(driver)
 
 
 def buildTranslatorPoolNew():
@@ -198,8 +197,6 @@ class PostHandler(BaseHTTPRequestHandler):
         #         self.send_error(404, 'File Not Found: %s' % self.path)
 
     def do_POST(self):
-        driver = getDriver()
-        # driver = getDriver()
         req_datas = self.rfile.read(int(self.headers['content-length']))  # 重点在此步!
         info = req_datas.decode()
         jinfo = json.loads(info)
@@ -232,11 +229,15 @@ class PostHandler(BaseHTTPRequestHandler):
             else:
                 if isyoutubetitle and i == 1:
                     aa = queue[0] + queue[1]
+                driver = getDriver()
                 ret = driver.get_trans_result(aa)
-                while ret == "1331" or ret.count("。") > len(ret)/3:
+                count = 1
+                while count < 10 and (ret == "1331" or ret.count("。") > len(ret)/3 or\
+                        len(ret) == 0 or ret == " " or ret == "  " or ret == "   "):
                     driver = getDriver()
                     ret = driver.get_trans_result(aa)
-
+                    count += 1
+                backDriver(driver)
                 gangi = ret.find("/")
                 print("原文： " + aa)
                 print("译文： " + ret)
