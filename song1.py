@@ -142,7 +142,7 @@ driverss = []
 driver_lock = threading.Lock()
 
 def getDriver():
-    with driver_lock:
+    # with driver_lock:
         while len(driverss):
             nextDriver = driverss.pop()
             curTime = time.time()
@@ -159,7 +159,7 @@ def backDriver(driver):
 
 def buildTranslatorPoolNew():
     while True:
-        while len(driverss) < 50:
+        while len(driverss) < 100:
             new_driver = Tencent.TencentTrans()
             backDriver(new_driver)
             print("翻译者有：！！！！！！！！！！！！！！！！！！！！！！！！！！！" + str(len(driverss)) + "个")
