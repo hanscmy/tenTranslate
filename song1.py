@@ -143,22 +143,29 @@ driver_lock = threading.Lock()
 
 def getDriver():
     with driver_lock:
-        if len(driverss):
+        while len(driverss):
             nextDriver = driverss.pop()
-            return nextDriver
+            curTime = time.time()
+            if curTime - nextDriver.time < 120:
+                return nextDriver
         new_driver = Tencent.TencentTrans()
         return new_driver
 
 def backDriver(driver):
-    with driver_lock:
-        driverss.append(driver)
+    curTime = time.time()
+    if curTime - driver.time < 120:
+        with driver_lock:
+            driverss.append(driver)
+
 
 def buildTranslatorPoolNew():
     while True:
-        while len(driverss) < 200:
+        while len(driverss) < 50:
             new_driver = Tencent.TencentTrans()
             backDriver(new_driver)
             print("翻译者有：！！！！！！！！！！！！！！！！！！！！！！！！！！！" + str(len(driverss)) + "个")
+
+
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 

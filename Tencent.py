@@ -115,7 +115,7 @@ def getHtml(url,headers,data):
 class TencentTrans(object):
     
     def __init__(self):
-        self.time = 0
+        self.time = time.time()
 
         self.api_url = 'https://fanyi.qq.com/api/translate'
         self.headers = {
