@@ -396,7 +396,7 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                     var a = r[i];
                     if (a && (!a.classList || !a.classList.contains(V) && !a.classList.contains(q))) if (a.classList && (a.classList.contains("js_message_plain") || a.classList.contains("message_body"))) G(r[i]).children("." + q).length > 0 || (n(a), l.push(a)); else if ("PRE" != a.nodeName) if ("P" != a.nodeName) {
                         if (E(a)) {
-                            if ((a.nodeName.indexOf("H") >= 0 && ("H1" == a.nodeName || "H2" == a.nodeName || "H3" == a.nodeName || "H4" == a.nodeName || "H5" == a.nodeName || "H6" == a.nodeName) && !(a.firstElementChild && ("SPAN" == a.firstElementChild.nodeName || "SPAN" == a.lastElementChild.nodeName || "A" == a.firstElementChild.nodeName || "A" == a.lastElementChild.nodeName) || a.parentElement && "A" == a.parentElement.nodeName))) {
+                            if ((a.nodeName.indexOf("H") >= 0 && ("H1" == a.nodeName || "H2" == a.nodeName || "H3" == a.nodeName || "H4" == a.nodeName || "H5" == a.nodeName || "H6" == a.nodeName))) {
                                 k(a, V), c.push(a);
                                 continue
                             }
@@ -466,7 +466,6 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                 for (var o = [], s = 0, u = t.length; s < u; s++) {
                     var l = t[s].innerText;
                     if(t[s].parentElement.parentElement.className === "captions-text" && this.document.location["href"].indexOf("www.youtube.com") !== -1){
-                        debugger;
                         if(!this.document.forYoutubeEache) {
                             this.document.forYoutubeEache = {"subtitle": {}};
                         }
