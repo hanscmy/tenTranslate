@@ -3,7 +3,6 @@
 # import sys
 # reload(sys)
 # sys.setdefaultencoding('utf8')
-
 import json
 import _thread
 # from selenium.webdriver import Firefox
@@ -168,7 +167,7 @@ def buildTranslatorPoolNew():
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
-
+badInfos = {}
 class PostHandler(BaseHTTPRequestHandler):
     # GET
     def do_GET(self):
@@ -204,9 +203,9 @@ class PostHandler(BaseHTTPRequestHandler):
         pid = jinfo['page_id']
         queue = jinfo["source"]
         url = jinfo["url"]
-        isyoutubetitle = False
-        if url.find("youtube") != -1 and len(queue) == 2:
-            isyoutubetitle = True
+        # isyoutubetitle = False
+        # if url.find("youtube") != -1 and len(queue) == 2:
+        #     isyoutubetitle = True
         data = {
             "confidence": 0.8,
             "page_id": pid,
@@ -222,32 +221,43 @@ class PostHandler(BaseHTTPRequestHandler):
             count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": "", "trans_type": type}
             ret = ""
 
-            if isyoutubetitle and i == 0:
-                ret = ""
-            elif (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
+            # if isyoutubetitle and i == 0:
+            #     ret = ""
+            if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
                 ret = str(eache.get(aa), encoding="utf-8")
             else:
-                if isyoutubetitle and i == 1:
-                    aa = queue[0] + queue[1]
-                driver = getDriver()
-                ret = driver.get_trans_result(aa)
-                count = 1
-                while count < 10 and (ret == "1331" or ret.count("。") > len(ret)/3 or\
-                        len(ret) == 0 or ret == " " or ret == "  " or ret == "   "):
+                # if isyoutubetitle and i == 1:
+                #     aa = queue[0] + queue[1]
+                if len(aa) == 0 or aa == " " or aa == "  " or aa == "   ":
+                    ret = aa
+                elif badInfos.get(aa):
+                    ret = badInfos[aa]
+                else:
                     driver = getDriver()
                     ret = driver.get_trans_result(aa)
-                    count += 1
-                backDriver(driver)
-                gangi = ret.find("/")
-                print("原文： " + aa)
-                print("译文： " + ret)
-                print("")
-                if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
-                    ret = ret[0:gangi-1]
-                if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
-                    eache.set(aa, ret)
+                    count = 1
+                    while count < 5 and (ret == "1331" or ret.count("。") > len(ret)/3 or len(ret) == 0 or ret == " " or ret == "  " or ret == "   "):
+                        driver = getDriver()
+                        ret = driver.get_trans_result(aa)
+                        count += 1
+
+                    if ret == "1331" or ret.count("。") > len(ret) / 3 or len(
+                            ret) == 0 or ret == " " or ret == "  " or ret == "   ":
+                        if len(aa) < 50:
+                            badInfos[aa] = aa
+                        ret = aa
+                    backDriver(driver)
+                    gangi = ret.find("/")
+                    if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
+                        ret = ret[0:gangi-1]
+                    if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                        eache.set(aa, ret)
+
+            print("原文： " + aa)
+            print("译文： " + ret)
+            print("")
             ret = '''
-            '''+ret
+                                            ''' + ret
             count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
             data["target"].append(count)
 

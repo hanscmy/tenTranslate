@@ -392,14 +392,9 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
 
         function b() {
             function t(e) {
-                if (!(G(e).is(":hidden") || "SCRIPT" == e.nodeName || "LINK" == e.nodeName || "STYLE" == e.nodeName || "CODE" == e.nodeName || "NOSCRIPT" == e.nodeName || "CITE" == e.nodeName || e.classList && (e.classList.contains(V) || e.classList.contains(q) || e.classList.contains("qq_face") || e.classList.contains("msg_input_wrapper") || e.classList.contains("prettyprint") || e.classList.contains("PROGRAMLISTING"))))
-                    for (var r = e.childNodes, i = 0, o = r.length; i < o; i++) {
+                if (!(G(e).is(":hidden") || "SCRIPT" == e.nodeName || "LINK" == e.nodeName || "STYLE" == e.nodeName || "CODE" == e.nodeName || "NOSCRIPT" == e.nodeName || "CITE" == e.nodeName || e.classList && (e.classList.contains(V) || e.classList.contains(q) || e.classList.contains("qq_face") || e.classList.contains("msg_input_wrapper") || e.classList.contains("prettyprint") || e.classList.contains("PROGRAMLISTING")))) for (var r = e.childNodes, i = 0, o = r.length; i < o; i++) {
                     var a = r[i];
-                    if (a && (!a.classList || !a.classList.contains(V) && !a.classList.contains(q)))
-                        if (a.classList && (a.classList.contains("js_message_plain") || a.classList.contains("message_body")))
-                            G(r[i]).children("." + q).length > 0 || (n(a), l.push(a));
-                        else if ("PRE" != a.nodeName)
-                            if ("P" != a.nodeName) {
+                    if (a && (!a.classList || !a.classList.contains(V) && !a.classList.contains(q))) if (a.classList && (a.classList.contains("js_message_plain") || a.classList.contains("message_body"))) G(r[i]).children("." + q).length > 0 || (n(a), l.push(a)); else if ("PRE" != a.nodeName) if ("P" != a.nodeName) {
                         if (E(a)) {
                             if ((a.nodeName.indexOf("H") >= 0 && ("H1" == a.nodeName || "H2" == a.nodeName || "H3" == a.nodeName || "H4" == a.nodeName || "H5" == a.nodeName || "H6" == a.nodeName) && !(a.firstElementChild && ("SPAN" == a.firstElementChild.nodeName || "SPAN" == a.lastElementChild.nodeName || "A" == a.firstElementChild.nodeName || "A" == a.lastElementChild.nodeName) || a.parentElement && "A" == a.parentElement.nodeName))) {
                                 k(a, V), c.push(a);
@@ -454,7 +449,7 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
             }
 
             function o(e, t, n, r) {
-                var i = 5;
+                var i = 3;
                 for (; e.length > 0;) {
                     var o = e.splice(0, i);
                     a(o, t, r)
@@ -471,6 +466,7 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                 for (var o = [], s = 0, u = t.length; s < u; s++) {
                     var l = t[s].innerText;
                     if(t[s].parentElement.parentElement.className === "captions-text" && this.document.location["href"].indexOf("www.youtube.com") !== -1){
+                        debugger;
                         if(!this.document.forYoutubeEache) {
                             this.document.forYoutubeEache = {"subtitle": {}};
                         }
@@ -492,11 +488,11 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                                 tripCharIndex4 = l.lastIndexOf(",")
                                 tripCharIndex11 = Math.max(tripCharIndex1, tripCharIndex2, tripCharIndex3);
                                 tripCharIndex22 = Math.max(tripCharIndex1, tripCharIndex2, tripCharIndex3, tripCharIndex4);
-                                if(tripCharIndex4 === tripCharIndex) {
-                                    tripCharIndex5 = l.lastIndexOf(",", tripCharIndex4)
-                                    tripCharIndex1 = l.lastIndexOf(".", tripCharIndex4)
-                                    tripCharIndex2 = l.lastIndexOf(":", tripCharIndex4)
-                                    tripCharIndex3 = l.lastIndexOf(";", tripCharIndex4)
+                                if(tripCharIndex4 === tripCharIndex22) {
+                                    tripCharIndex5 = l.lastIndexOf(",", tripCharIndex4-1)
+                                    tripCharIndex1 = l.lastIndexOf(".", tripCharIndex4-1)
+                                    tripCharIndex2 = l.lastIndexOf(":", tripCharIndex4-1)
+                                    tripCharIndex3 = l.lastIndexOf(";", tripCharIndex4-1)
                                     tripCharIndex6 = Math.max(tripCharIndex1, tripCharIndex2, tripCharIndex3, tripCharIndex5);
                                     if(tripCharIndex4 - tripCharIndex6 < 20) {
                                         tripCharIndex = tripCharIndex11
@@ -504,11 +500,12 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                                         tripCharIndex = tripCharIndex22
                                     }
                                 } else {
-                                    tripCharIndex11
+                                    tripCharIndex = tripCharIndex22
                                 }
                                 if(tripCharIndex !== -1) {
                                     //可以缓存此页
                                     this.document.forYoutubeEache["subtitle"]["eache"] = l.slice(tripCharIndex+1, l.length);
+                                    l = l.slice(0, tripCharIndex);
                                 } else {
                                     this.document.forYoutubeEache["subtitle"]["eache"] = null;
                                 }
@@ -538,11 +535,11 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                                 tripCharIndex4 = l.lastIndexOf(",")
                                 tripCharIndex11 = Math.max(tripCharIndex1, tripCharIndex2, tripCharIndex3);
                                 tripCharIndex22 = Math.max(tripCharIndex1, tripCharIndex2, tripCharIndex3, tripCharIndex4);
-                                if(tripCharIndex4 === tripCharIndex) {
-                                    tripCharIndex5 = l.lastIndexOf(",", tripCharIndex4)
-                                    tripCharIndex1 = l.lastIndexOf(".", tripCharIndex4)
-                                    tripCharIndex2 = l.lastIndexOf(":", tripCharIndex4)
-                                    tripCharIndex3 = l.lastIndexOf(";", tripCharIndex4)
+                                if(tripCharIndex4 === tripCharIndex22) {
+                                    tripCharIndex5 = l.lastIndexOf(",", tripCharIndex4-1)
+                                    tripCharIndex1 = l.lastIndexOf(".", tripCharIndex4-1)
+                                    tripCharIndex2 = l.lastIndexOf(":", tripCharIndex4-1)
+                                    tripCharIndex3 = l.lastIndexOf(";", tripCharIndex4-1)
                                     tripCharIndex6 = Math.max(tripCharIndex1, tripCharIndex2, tripCharIndex3, tripCharIndex5);
                                     if(tripCharIndex4 - tripCharIndex6 < 20) {
                                         tripCharIndex = tripCharIndex11
@@ -550,7 +547,7 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                                         tripCharIndex = tripCharIndex22
                                     }
                                 } else {
-                                    tripCharIndex11
+                                   tripCharIndex = tripCharIndex22
                                 }
                                 if(tripCharIndex !== -1) {
                                     //可以缓存此页
@@ -582,13 +579,6 @@ window.tencentFanyiWeb = "https://fanyi.cn1.utools.club";
                                 var c = t[u], d = "";
                                 if (s[u] && s[u].target && (d = s[u].target.trim(), o[u].trim().toLowerCase() !== d.toLowerCase())) {
                                     var p = 0;
-                                     var lengg = d.length;
-                            mmm = d.match("\&lt;.*?\&gt;")
-                            if(mmm && mmm.length){
-                                fromm = mmm.index;
-                                tooo = mmm[0].length+fromm;
-                                d = d.slice(0,fromm)+d.slice(tooo, lengg);
-                            }
                                     s[u].sentence_id && (p = s[u].sentence_id);
                                     var f = s[u].count || 0;
                                     if ("p" == n) {
