@@ -161,7 +161,7 @@ def buildTranslatorPoolNew():
         while len(driverss) < 100:
             new_driver = Tencent.TencentTrans()
             backDriver(new_driver)
-            print("翻译者有：！！！！！！！！！！！！！！！！！！！！！！！！！！！" + str(len(driverss)) + "个")
+            # print("翻译者有：！！！！！！！！！！！！！！！！！！！！！！！！！！！" + str(len(driverss)) + "个")
 
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -169,6 +169,8 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 
 badInfos = {}
 class PostHandler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
     # GET
     def do_GET(self):
         sendReply = False
@@ -253,9 +255,8 @@ class PostHandler(BaseHTTPRequestHandler):
                     if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
                         eache.set(aa, ret)
 
-            print("原文： " + aa)
-            print("译文： " + ret)
-            print("")
+            a = "原文： " + aa+"\n译文： " + ret+"\n"
+            print(a)
             ret = '''
                                             ''' + ret
             count = {"confidence": 0.8, "count": 0, "rc": 0, "sentence_id": 0, "target": ret, "trans_type": type}
