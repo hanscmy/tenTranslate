@@ -25,14 +25,14 @@ locks = {
 }
 retPools = {}
 # eache = redis.StrictRedis(host='localhost', port=6379, db=0)
-# class Eache():
-#     def __init__(self):
-#         self.content = {}
-#     def get(self, key):
-#         return self.content[key]
-#     def set(self, key, value):
-#         content[key] = value
-# eache = Eache()
+class Eache():
+    def __init__(self):
+        self.content = {}
+    def get(self, key):
+        return hasattr(self.content,key)
+    def set(self, key, value):
+        self.content[key] = value
+eache = Eache()
 
 # MIME-TYPE
 mimedic = [
@@ -225,9 +225,7 @@ class PostHandler(BaseHTTPRequestHandler):
 
             # if isyoutubetitle and i == 0:
             #     ret = ""
-            # if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
-            #     ret = str(eache.get(aa), encoding="utf-8")
-            if False:
+            if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
                 ret = str(eache.get(aa), encoding="utf-8")
             else:
                 # if isyoutubetitle and i == 1:
@@ -254,8 +252,8 @@ class PostHandler(BaseHTTPRequestHandler):
                     gangi = ret.find("/")
                     if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
                         ret = ret[0:gangi-1]
-                    # if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
-                    #     eache.set(aa, ret)
+                    if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                        eache.set(aa, ret)
 
             a = "原文： " + aa+"\n译文： " + ret+"\n"
             print(a)
