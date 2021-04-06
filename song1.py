@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-# import sys
-# reload(sys)
-# sys.setdefaultencoding('utf8')
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 import json
 import _thread
 # from selenium.webdriver import Firefox
@@ -15,7 +15,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-import redis
+# import redis
 import re
 import Tencent
 Tencen = Tencent.TencentTrans()
@@ -24,7 +24,7 @@ Tencen = Tencent.TencentTrans()
 locks = {
 }
 retPools = {}
-eache = redis.StrictRedis(host='localhost', port=6379, db=0)
+# eache = redis.StrictRedis(host='localhost', port=6379, db=0)
 # class Eache():
 #     def __init__(self):
 #         self.content = {}
@@ -225,7 +225,9 @@ class PostHandler(BaseHTTPRequestHandler):
 
             # if isyoutubetitle and i == 0:
             #     ret = ""
-            if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
+            # if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
+            #     ret = str(eache.get(aa), encoding="utf-8")
+            if False:
                 ret = str(eache.get(aa), encoding="utf-8")
             else:
                 # if isyoutubetitle and i == 1:
@@ -252,8 +254,8 @@ class PostHandler(BaseHTTPRequestHandler):
                     gangi = ret.find("/")
                     if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
                         ret = ret[0:gangi-1]
-                    if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
-                        eache.set(aa, ret)
+                    # if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                    #     eache.set(aa, ret)
 
             a = "原文： " + aa+"\n译文： " + ret+"\n"
             print(a)
