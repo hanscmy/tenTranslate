@@ -225,7 +225,7 @@ class PostHandler(BaseHTTPRequestHandler):
 
             # if isyoutubetitle and i == 0:
             #     ret = ""
-            if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
+            if (len(aa) < 25 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
                 ret = str(eache.get(aa), encoding="utf-8")
             else:
                 # if isyoutubetitle and i == 1:
@@ -245,14 +245,14 @@ class PostHandler(BaseHTTPRequestHandler):
 
                     if ret == "1331" or ret.count("。") > len(ret) / 3 or len(
                             ret) == 0 or ret == " " or ret == "  " or ret == "   ":
-                        if len(aa) < 50:
+                        if len(aa) < 25:
                             badInfos[aa] = aa
                         ret = aa
                     backDriver(driver)
                     gangi = ret.find("/")
                     if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
                         ret = ret[0:gangi-1]
-                    if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                    if len(aa) < 25 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
                         eache.set(aa, ret)
 
             a = "原文： " + aa+"\n译文： " + ret+"\n"
