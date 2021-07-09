@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+# reload(sys)
+# sys.setdefaultencoding('utf8')
 import json
 import _thread
 # from selenium.webdriver import Firefox
@@ -24,15 +24,21 @@ Tencen = Tencent.TencentTrans()
 locks = {
 }
 retPools = {}
-# eache = redis.StrictRedis(host='localhost', port=6379, db=0)
-class Eache():
-    def __init__(self):
-        self.content = {}
-    def get(self, key):
-        return hasattr(self.content,key)
-    def set(self, key, value):
-        self.content[key] = value
-eache = Eache()
+eache = None
+CFG_REDIS = False
+# CFG_REDIS = True
+if CFG_REDIS:
+    import redis
+    eache = redis.StrictRedis(host='localhost', port=6379, db=0)
+else:
+    class Eache():
+        def __init__(self):
+            self.content = {}
+        def get(self, key):
+            return self.content.get(key)
+        def set(self, key, value):
+            self.content[key] = value
+    eache = Eache()
 
 # MIME-TYPE
 mimedic = [
@@ -175,6 +181,16 @@ class PostHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         sendReply = False
         print("get")
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', "*")
+        self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        self.send_header("Access-Control-Allow-Headers", "X-Requested-With")
+        self.send_header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, "
+                                                         "X-Authorization, Referrer")
+        self.send_header("Access-Control-Allow-Credentials", 'true')
+        self.end_headers()
+        self.wfile.write("ok".encode('utf-8'))
         # querypath = urlparse(self.path)
         # filepath, query = querypath.path, querypath.query
         #
@@ -225,8 +241,11 @@ class PostHandler(BaseHTTPRequestHandler):
 
             # if isyoutubetitle and i == 0:
             #     ret = ""
-            if (len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
-                ret = str(eache.get(aa), encoding="utf-8")
+            if (len(aa) < 25 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh") and eache.get(aa):
+                if CFG_REDIS:
+                    ret = str(eache.get(aa), encoding="utf-8")
+                else:
+                    ret = eache.get(aa)
             else:
                 # if isyoutubetitle and i == 1:
                 #     aa = queue[0] + queue[1]
@@ -245,14 +264,14 @@ class PostHandler(BaseHTTPRequestHandler):
 
                     if ret == "1331" or ret.count("。") > len(ret) / 3 or len(
                             ret) == 0 or ret == " " or ret == "  " or ret == "   ":
-                        if len(aa) < 50:
+                        if len(aa) < 25:
                             badInfos[aa] = aa
                         ret = aa
                     backDriver(driver)
                     gangi = ret.find("/")
                     if aa.count(" ") < 2 and type[0:2] == "en" and gangi != -1:
                         ret = ret[0:gangi-1]
-                    if len(aa) < 50 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
+                    if len(aa) < 25 and type[0:2] == "en" or len(aa) < 10 and type[0:2] == "zh":
                         eache.set(aa, ret)
 
             a = "原文： " + aa+"\n译文： " + ret+"\n"
@@ -290,9 +309,16 @@ class PostHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
 def start_server():
-    host = '127.0.0.1'
+    host = '192.168.60.106'
     port = 9999
+
+    # import ssl
+    # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    # context.load_cert_chain("./ca/server.pem", "./ca/server.key")#自己添加
+
     httpd = ThreadingHTTPServer((host, port), PostHandler)
+    # httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
+
     try:
         httpd.serve_forever()
     except (KeyboardInterrupt, ConnectionAbortedError):
