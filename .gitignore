@@ -1,1 +1,3 @@
 .idea
+nginx/nginx-1.16.1/logs
+__pycache__
