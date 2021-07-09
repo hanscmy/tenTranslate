@@ -299,7 +299,10 @@ class PostHandler(BaseHTTPRequestHandler):
                                                          "X-Authorization, Referrer")
         self.send_header("Access-Control-Allow-Credentials", 'true')
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
+        try:
+            self.wfile.write(json.dumps(data).encode('utf-8'))
+        except:
+            pass
 
     def do_OPTIONS(self):
         self.send_response(200, "ok")
